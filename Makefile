@@ -1,5 +1,5 @@
 CXX=g++-6
-CXX_FLAGS=-std=c++14 -Wall -Wextra -O2 -march=native
+CXX_FLAGS=-std=c++14 -Wall -Wextra -O2 -march=native -pthread
 
 all: benchmark
 

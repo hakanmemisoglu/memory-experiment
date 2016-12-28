@@ -1,11 +1,11 @@
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <vector>
-#include <condition_variable>
 #include <mutex>
+#include <vector>
 
 #include <pthread.h>
 #include <sched.h>
@@ -83,6 +83,7 @@ void* benchmark_function(void *arg) {
   }
 
   benchmark_arg->result = result;
+  free_array(array);
   return nullptr;
 }
 
@@ -133,12 +134,22 @@ void benchmark(const std::size_t num_thread,
     sum += thread_args[t].result;
   }
 
-  std::fprintf(stdout, "Dummy sum: %lu\n", reinterpret_cast<std::uint64_t>(sum));
+  std::fprintf(stdout, "Dummy sum: %lu\n", static_cast<std::uint64_t>(sum));
 }
 
 int main(int argc, char *argv[]) {
   std::fprintf(stdout, "Size of array %lu bytes.\n", SIZE_ARRAY);
   std::srand(std::time(nullptr));
+
+  std::size_t word_size = -1;
+
+  if (argc != 2) {
+    std::fprintf(stdout, "Wrong argument!\n");
+    std::exit(1);
+  }
+  else {
+    word_size = static_cast<std::size_t>(std::atol(argv[1]));
+  }
 
   std::vector<std::size_t> thread_numbers = {1, 2, 4, 8, 10, 20, 30, 40};
 
@@ -149,11 +160,17 @@ int main(int argc, char *argv[]) {
                                              10485760, 20971520, 41943040};
 
   for (const auto &thread_number : thread_numbers) {
+    std::fprintf(stdout, "Thread number: %lu\n", thread_number);
+
     for (const auto &jump : jump_in_bytes) {
-      benchmark<std::uint8_t>(thread_number, jump);
-      benchmark<std::uint16_t>(thread_number, jump);
-      benchmark<std::uint32_t>(thread_number, jump);
-      benchmark<std::uint64_t>(thread_number, jump);
+
+      switch (word_size) {
+      case 1: benchmark<std::uint8_t>(thread_number, jump); break;
+      case 2: benchmark<std::uint16_t>(thread_number, jump); break;
+      case 3: benchmark<std::uint32_t>(thread_number, jump); break;
+      case 4: benchmark<std::uint64_t>(thread_number, jump); break;
+      default: fprintf(stdout, "Wrong argument!\n"); break;
+      }
     }
   }
 }
