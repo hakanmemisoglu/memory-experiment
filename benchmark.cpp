@@ -1,3 +1,5 @@
+#include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -43,6 +45,7 @@ struct BenchmarkArg {
   T result;
   std::size_t num_elements;
   std::size_t step_size;
+  std::size_t thread_bandwidth;
   Barrier *barrier;
 };
 
@@ -70,7 +73,7 @@ void* benchmark_function(void *arg) {
   BenchmarkArg<T>* benchmark_arg = reinterpret_cast<BenchmarkArg<T>*>(arg);
   Barrier *barrier = benchmark_arg->barrier;
   std::size_t num_elements = benchmark_arg->num_elements;
-
+  std::size_t step_size = benchmark_arg->step_size;
   // Construct the array and wait for others.
   T* array;
   initialize_array(&array);
@@ -78,11 +81,22 @@ void* benchmark_function(void *arg) {
 
   // Array processing part.
   T result = T();
-  for (std::size_t i = 0; i < num_elements; ++i) {
+  // Start timer.
+  auto begin_time = std::chrono::steady_clock::now();
+  for (std::size_t i = 0; i < num_elements; i += step_size) {
     result += array[i];
   }
+  // End timer.
+  auto end_time = std::chrono::steady_clock::now();
+
+  std::chrono::nanoseconds elapsed_ns = end_time - begin_time;
+  double elapsed_seconds = static_cast<double>(elapsed_ns.count()) / std::pow(10, 9);
+
+  std::size_t bytes_touched = num_elements * sizeof(T);
+  double memory_bandwidth = bytes_touched / elapsed_seconds;
 
   benchmark_arg->result = result;
+  benchmark_arg->thread_bandwidth = memory_bandwidth;
   free_array(array);
   return nullptr;
 }
@@ -92,6 +106,7 @@ template <typename T>
 void benchmark(const std::size_t num_thread,
                const std::size_t jump_in_byte) {
   T sum = T();
+  double total_memory_bandwidth = 0.0;
 
   const std::size_t elements_needed = SIZE_ARRAY / sizeof(T);
   std::fprintf(stdout, "Elements: %lu\n", elements_needed);
@@ -130,12 +145,13 @@ void benchmark(const std::size_t num_thread,
     pthread_join(threads[t], nullptr);
   }
 
-
   for (std::size_t t = 0; t < num_thread; ++t) {
     sum += thread_args[t].result;
+    total_memory_bandwidth += thread_args[t].thread_bandwidth;
   }
 
   std::fprintf(stdout, "Dummy sum: %lu\n", static_cast<std::uint64_t>(sum));
+  std::fprintf(stdout, "Memory bandwidth: %f GBps\n", total_memory_bandwidth);
 }
 
 int main(int argc, char *argv[]) {
