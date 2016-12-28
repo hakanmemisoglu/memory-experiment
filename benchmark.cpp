@@ -45,7 +45,7 @@ struct BenchmarkArg {
   T result;
   std::size_t num_elements;
   std::size_t step_size;
-  std::size_t thread_bandwidth;
+  double thread_bandwidth;
   Barrier *barrier;
 };
 
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::size_t> thread_numbers = {1, 2, 4, 8, 10, 20, 30, 40};
 
-  std::vector<std::size_t> jump_in_bytes = { 8, 16, 32, 80, 160, 320, 640,
+  std::vector<std::size_t> jump_in_bytes = { 8, 16, 32, 64, 80, 128, 160, 320, 640,
                                              1280, 2560, 5120, 10240, 20480,
                                              40960, 81920, 163840, 327680,
                                              655360, 1310720, 2621440, 5242880,
