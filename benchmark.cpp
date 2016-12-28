@@ -93,7 +93,8 @@ void* benchmark_function(void *arg) {
   double elapsed_seconds = static_cast<double>(elapsed_ns.count()) / std::pow(10, 9);
 
   std::size_t bytes_touched = num_elements * sizeof(T);
-  double memory_bandwidth = bytes_touched / elapsed_seconds;
+  double gigabytes_touched = static_cast<double>(bytes_touched) / std::pow(1024, 3);
+  double memory_bandwidth = gigabytes_touched / elapsed_seconds;
 
   benchmark_arg->result = result;
   benchmark_arg->thread_bandwidth = memory_bandwidth;
