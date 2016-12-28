@@ -11,7 +11,7 @@
 #include <sched.h>
 
 constexpr std::size_t SIZE_ARRAY = 1ul << 30;
-constexpr std::int64_t VALUE_UPPER_LIMIT = 100;
+constexpr std::uint64_t VALUE_UPPER_LIMIT = 100ul;
 
 struct Barrier {
   Barrier(const std::size_t num_threads)
@@ -117,6 +117,7 @@ void benchmark(const std::size_t num_thread,
 
   std::vector<BenchmarkArg<T>> thread_args(num_thread);
   for (std::size_t t = 0; t < num_thread; ++t) {
+    thread_args[t].num_elements = elements_needed;
     thread_args[t].step_size = elements_jumped;
     thread_args[t].barrier = &barrier;
   }
