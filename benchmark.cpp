@@ -92,7 +92,8 @@ void* benchmark_function(void *arg) {
   std::chrono::nanoseconds elapsed_ns = end_time - begin_time;
   double elapsed_seconds = static_cast<double>(elapsed_ns.count()) / std::pow(10, 9);
 
-  std::size_t bytes_touched = num_elements * sizeof(T);
+  std::size_t elements_touched = ((num_elements - 1) / step_size) + 1;
+  std::size_t bytes_touched = elements_touched * sizeof(T);
   double gigabytes_touched = static_cast<double>(bytes_touched) / std::pow(1024, 3);
   double memory_bandwidth = gigabytes_touched / elapsed_seconds;
 
